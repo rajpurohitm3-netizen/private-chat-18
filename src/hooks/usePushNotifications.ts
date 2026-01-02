@@ -60,10 +60,10 @@ export function usePushNotifications(userId: string | null) {
           return false;
         }
 
-        const sub = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-        });
+          const sub = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey).buffer as ArrayBuffer
+          });
 
         setSubscription(sub);
         await saveSubscription(sub, userId);

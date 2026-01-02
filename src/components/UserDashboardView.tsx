@@ -1080,9 +1080,8 @@ export function UserDashboardView({ session, privateKey }: UserDashboardViewProp
                     </div>
                     <div className="h-[calc(100%-88px)]">
                       <SpecialDays
-                        userId={session.user.id}
-                        friendId={selectedFriendForMemories.id}
-                      />
+                          userId={session.user.id}
+                        />
                     </div>
                   </div>
                 )}
