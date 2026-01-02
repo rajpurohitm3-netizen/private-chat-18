@@ -8,7 +8,7 @@ import {
     Zap, Settings2, Globe, Video as VideoIcon, UserPlus, Lock, Flame, 
     Clock, Eye, Ban, ShieldCheck, Activity, Phone, MapPin, Search, 
     ChevronRight, ArrowUpRight, Database, Server, Cpu, Layers, HardDrive, Terminal,
-    Radio, Menu, Key, Loader2, Film, Music, CalendarHeart, MessageCircle, Image
+    Radio, Menu, Key, Loader2, Film, Music, CalendarHeart, MessageCircle, Image, Plus
   } from "lucide-react";
 import { AvatarDisplay } from "./AvatarDisplay";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 
 const TABS = [
   { id: "overview", label: "Intelligence Hub", icon: Activity },
+  { id: "register", label: "Register Node", icon: Plus },
   { id: "stories", label: "Network Stories", icon: Radio },
   { id: "requests", label: "Access Requests", icon: UserPlus },
   { id: "password", label: "Password Requests", icon: Lock },
@@ -276,12 +277,17 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true);
   const [broadcastMsg, setBroadcastMsg] = useState("");
   const [sending, setSending] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "stories" | "requests" | "password" | "users" | "features" | "content" | "system" | "security">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "register" | "stories" | "requests" | "password" | "users" | "features" | "content" | "system" | "security">("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [kernelStatus, setKernelStatus] = useState("STABLE");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [passwordRequests, setPasswordRequests] = useState<any[]>([]);
   const [processingRequest, setProcessingRequest] = useState<string | null>(null);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserFullName, setNewUserFullName] = useState("");
+  const [newUserUsername, setNewUserUsername] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -315,6 +321,71 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
     else {
       setSystemConfig({ ...systemConfig, [key]: value });
       toast.success("System protocol updated");
+    }
+  }
+
+  async function registerNewUser() {
+    if (!newUserEmail || !newUserPassword || !newUserUsername) {
+      toast.error("Email, password and username are required");
+      return;
+    }
+    
+    setIsRegistering(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: newUserEmail,
+        password: newUserPassword,
+        options: {
+          data: {
+            username: newUserUsername,
+            full_name: newUserFullName
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          username: newUserUsername,
+          full_name: newUserFullName || newUserUsername,
+          is_approved: true,
+          updated_at: new Date().toISOString()
+        });
+        
+        toast.success("New node registered successfully!");
+        setNewUserEmail("");
+        setNewUserPassword("");
+        setNewUserFullName("");
+        setNewUserUsername("");
+        fetchData();
+      }
+    } catch (e: any) {
+      console.error("Registration error:", e);
+      toast.error(e.message || "Failed to register new node");
+    } finally {
+      setIsRegistering(false);
+    }
+  }
+
+  async function rejectAccessRequest(userId: string) {
+    try {
+      await supabase.auth.admin.deleteUser(userId);
+      const { error } = await supabase.from("profiles").delete().eq("id", userId);
+      if (error) throw error;
+      toast.success("Access request rejected and user removed");
+      fetchData();
+    } catch (e: any) {
+      try {
+        const { error } = await supabase.from("profiles").delete().eq("id", userId);
+        if (error) throw error;
+        toast.success("Access request rejected");
+        fetchData();
+      } catch (e2: any) {
+        console.error("Reject error:", e2);
+        toast.error("Failed to reject request");
+      }
     }
   }
 
@@ -594,12 +665,96 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                       <Button onClick={sendBroadcast} disabled={sending} className="w-full bg-white text-indigo-600 hover:bg-white/90 h-16 rounded-2xl font-black tracking-widest text-[10px] relative z-10">
                           {sending ? "TRANSMITTING..." : "DEPLOY BROADCAST"}
                         </Button>
-                      </div>
-                      </div>
-                    </motion.div>
-                  )}
+                        </div>
+                        </div>
+                      </motion.div>
+                    )}
 
-              {activeTab === "stories" && (
+                {activeTab === "register" && (
+                  <motion.div key="register" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
+                    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 pb-8">
+                      <div className="max-w-2xl mx-auto">
+                        <div className="p-8 md:p-12 bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem]">
+                          <div className="flex items-center gap-4 mb-10">
+                            <div className="p-4 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl">
+                              <UserPlus className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                              <h3 className="text-2xl font-black italic text-white tracking-tighter">Register New Node</h3>
+                              <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">Create a new user account</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-6">
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2 block">Email Address *</label>
+                              <input
+                                type="email"
+                                value={newUserEmail}
+                                onChange={(e) => setNewUserEmail(e.target.value)}
+                                placeholder="user@example.com"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-indigo-500/50 transition-all placeholder:text-white/20"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2 block">Username *</label>
+                              <input
+                                type="text"
+                                value={newUserUsername}
+                                onChange={(e) => setNewUserUsername(e.target.value)}
+                                placeholder="username"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-indigo-500/50 transition-all placeholder:text-white/20"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2 block">Full Name</label>
+                              <input
+                                type="text"
+                                value={newUserFullName}
+                                onChange={(e) => setNewUserFullName(e.target.value)}
+                                placeholder="John Doe"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-indigo-500/50 transition-all placeholder:text-white/20"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[9px] font-black uppercase tracking-widest text-white/40 mb-2 block">Password *</label>
+                              <input
+                                type="password"
+                                value={newUserPassword}
+                                onChange={(e) => setNewUserPassword(e.target.value)}
+                                placeholder="••••••••"
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-white outline-none focus:border-indigo-500/50 transition-all placeholder:text-white/20"
+                              />
+                            </div>
+
+                            <Button
+                              onClick={registerNewUser}
+                              disabled={isRegistering || !newUserEmail || !newUserPassword || !newUserUsername}
+                              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white h-16 rounded-2xl font-black tracking-widest text-[10px] uppercase mt-4 disabled:opacity-50"
+                            >
+                              {isRegistering ? (
+                                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Registering...</>
+                              ) : (
+                                <><Plus className="w-4 h-4 mr-2" /> Register Node</>
+                              )}
+                            </Button>
+                          </div>
+
+                          <div className="mt-8 pt-8 border-t border-white/5">
+                            <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest text-center">
+                              New users will be automatically approved and can login immediately
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === "stories" && (
                 <motion.div key="stories" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full">
                   <StoriesManagement />
                 </motion.div>
@@ -630,10 +785,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                                 </div>
                             <div className="flex gap-3 w-full sm:w-auto">
                               <Button onClick={() => toggleApproval(user.id, false)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl h-12 text-[9px] font-black uppercase tracking-widest px-8">Approve</Button>
-                              <Button onClick={async () => {
-                                const { error } = await supabase.from("profiles").delete().eq("id", user.id);
-                                if (!error) { toast.success("Request rejected"); fetchData(); }
-                              }} variant="ghost" className="flex-1 bg-white/5 text-red-400 rounded-xl h-12 text-[9px] font-black uppercase tracking-widest px-8">Reject</Button>
+                              <Button onClick={() => rejectAccessRequest(user.id)} variant="ghost" className="flex-1 bg-white/5 text-red-400 hover:bg-red-500/20 rounded-xl h-12 text-[9px] font-black uppercase tracking-widest px-8">Reject</Button>
                             </div>
                           </div>
                         ))}
@@ -907,7 +1059,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                   </motion.div>
                 )}
 
-                {activeTab === "security" && (
+              {activeTab === "security" && (
                 <motion.div key="security" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-6">
                   <div className="p-8 bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem] space-y-8">
                     <div className="flex items-center justify-between">

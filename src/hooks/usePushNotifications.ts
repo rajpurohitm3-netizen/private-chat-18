@@ -62,7 +62,7 @@ export function usePushNotifications(userId: string | null) {
 
         const sub = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as ArrayBuffer
         });
 
         setSubscription(sub);

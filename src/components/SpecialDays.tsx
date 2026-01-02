@@ -89,7 +89,7 @@ export function SpecialDays({ userId, friendId }: SpecialDaysProps) {
       query = query.eq("user_id", userId);
     }
     
-    const { data, error } = await query;
+    const { data } = await query;
 
     if (data) {
       setSpecialDays(data);

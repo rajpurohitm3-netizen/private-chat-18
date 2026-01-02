@@ -97,7 +97,6 @@ export function UserDashboardView({ session, privateKey }: UserDashboardViewProp
   const [selectedFriendForMemories, setSelectedFriendForMemories] = useState<any>(null);
   const [outgoingRequests, setOutgoingRequests] = useState<string[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<string[]>([]);
-  const [systemConfig, setSystemConfig] = useState<any>({});
   const notificationSound = useRef<HTMLAudioElement | null>(null);
   const presenceChannelRef = useRef<any>(null);
 
@@ -134,7 +133,6 @@ export function UserDashboardView({ session, privateKey }: UserDashboardViewProp
     fetchPendingFriendRequests();
     fetchFriends();
     fetchFriendRequests();
-    fetchSystemConfig();
     updateStreak();
     const cleanup = setupRealtimeSubscriptions();
 
@@ -196,17 +194,6 @@ export function UserDashboardView({ session, privateKey }: UserDashboardViewProp
   async function fetchProfile() {
     const { data } = await supabase.from("profiles").select("*").eq("id", session.user.id).single();
     if (data) setMyProfile(data);
-  }
-
-  async function fetchSystemConfig() {
-    const { data } = await supabase.from("system_config").select("*");
-    if (data) {
-      const config = data.reduce((acc: any, item: any) => {
-        acc[item.key] = item.value;
-        return acc;
-      }, {});
-      setSystemConfig(config);
-    }
   }
 
   async function fetchProfiles() {
@@ -464,22 +451,20 @@ export function UserDashboardView({ session, privateKey }: UserDashboardViewProp
 
   const unreadNotificationCount = notifications.filter(n => !n.read).length;
 
-  const isFeatureEnabled = (feature: string) => systemConfig[`feature_${feature}`] !== 'false';
-
   const navItems = [
     { id: "dashboard", icon: Home, label: "Chatify" },
-    ...(isFeatureEnabled('chat') ? [{ id: "chat", icon: MessageCircle, label: "Signals", badge: unreadCount }] : []),
-    ...(isFeatureEnabled('vault') ? [{ id: "vault", icon: Shield, label: "Vault" }] : []),
-    ...(isFeatureEnabled('calls') ? [{ id: "calls", icon: Phone, label: "Uplink" }] : []),
+    { id: "chat", icon: MessageCircle, label: "Signals", badge: unreadCount },
+    { id: "vault", icon: Shield, label: "Vault" },
+    { id: "calls", icon: Phone, label: "Uplink" },
     { id: "connections", icon: UserPlus, label: "Connections", badge: pendingFriendRequests },
-    ...(isFeatureEnabled('cinema') || isFeatureEnabled('music') || isFeatureEnabled('memories') ? [{ id: "advanced", icon: Layers, label: "Advanced" }] : []),
+    { id: "advanced", icon: Layers, label: "Advanced" },
     { id: "settings", icon: Settings, label: "Entity" },
   ];
 
   const advancedFeatures = [
-    ...(isFeatureEnabled('cinema') ? [{ id: "cinema", icon: Film, label: "Cinema", desc: "Watch movies together", color: "from-purple-600 to-indigo-600" }] : []),
-    ...(isFeatureEnabled('music') ? [{ id: "music", icon: Music, label: "Music", desc: "YouTube & Local files", color: "from-emerald-600 to-teal-600" }] : []),
-    ...(isFeatureEnabled('memories') ? [{ id: "memories", icon: CalendarHeart, label: "Memories", desc: "Special days calendar", color: "from-pink-600 to-rose-600" }] : []),
+    { id: "cinema", icon: Film, label: "Cinema", desc: "Watch movies together", color: "from-purple-600 to-indigo-600" },
+    { id: "music", icon: Music, label: "Music", desc: "YouTube & Local files", color: "from-emerald-600 to-teal-600" },
+    { id: "memories", icon: CalendarHeart, label: "Memories", desc: "Special days calendar", color: "from-pink-600 to-rose-600" },
   ];
 
   const filteredFriendResults = profiles.filter(p =>
@@ -766,15 +751,13 @@ export function UserDashboardView({ session, privateKey }: UserDashboardViewProp
                       <p className="text-3xl font-black italic text-white">{stat.value}</p>
                       <p className="text-[10px] font-black text-white/80 uppercase tracking-widest mt-2">{stat.label}</p>
                     </div>
-                    ))}
-                  </div>
-                  {isFeatureEnabled('stories') && (
-                    <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
-                      <div className="flex items-center gap-4 mb-6"><Camera className="w-5 h-5 text-indigo-400" /><h3 className="text-sm font-black uppercase tracking-widest">Temporal Stories</h3></div>
-                      <Stories userId={session.user.id} />
-                    </div>
-                  )}
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  ))}
+                </div>
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
+                  <div className="flex items-center gap-4 mb-6"><Camera className="w-5 h-5 text-indigo-400" /><h3 className="text-sm font-black uppercase tracking-widest">Temporal Stories</h3></div>
+                  <Stories userId={session.user.id} />
+                </div>
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-6">
                     <h3 className="text-sm font-black uppercase tracking-widest mb-6">Your Friends</h3>
                     {friendProfiles.length === 0 ? (
