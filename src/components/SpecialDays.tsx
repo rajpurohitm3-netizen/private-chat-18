@@ -36,6 +36,7 @@ interface SpecialDay {
 
 interface SpecialDaysProps {
   userId: string;
+  friendId?: string;
 }
 
 const COLORS = [
@@ -58,7 +59,7 @@ const MONTHS = [
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export function SpecialDays({ userId }: SpecialDaysProps) {
+export function SpecialDays({ userId, friendId }: SpecialDaysProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [specialDays, setSpecialDays] = useState<SpecialDay[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -74,14 +75,21 @@ export function SpecialDays({ userId }: SpecialDaysProps) {
 
   useEffect(() => {
     fetchSpecialDays();
-  }, [userId]);
+  }, [userId, friendId]);
 
   const fetchSpecialDays = async () => {
-    const { data, error } = await supabase
+    let query = supabase
       .from("special_days")
       .select("*")
-      .eq("user_id", userId)
       .order("date", { ascending: true });
+    
+    if (friendId) {
+      query = query.or(`user_id.eq.${userId},user_id.eq.${friendId}`);
+    } else {
+      query = query.eq("user_id", userId);
+    }
+    
+    const { data, error } = await query;
 
     if (data) {
       setSpecialDays(data);

@@ -8,7 +8,7 @@ import {
     Zap, Settings2, Globe, Video as VideoIcon, UserPlus, Lock, Flame, 
     Clock, Eye, Ban, ShieldCheck, Activity, Phone, MapPin, Search, 
     ChevronRight, ArrowUpRight, Database, Server, Cpu, Layers, HardDrive, Terminal,
-    Radio, Menu, Key, Loader2
+    Radio, Menu, Key, Loader2, Film, Music, CalendarHeart, MessageCircle, Image
   } from "lucide-react";
 import { AvatarDisplay } from "./AvatarDisplay";
 import { toast } from "sonner";
@@ -21,6 +21,7 @@ const TABS = [
   { id: "requests", label: "Access Requests", icon: UserPlus },
   { id: "password", label: "Password Requests", icon: Lock },
   { id: "users", label: "Node Directory", icon: Users },
+  { id: "features", label: "Feature Control", icon: Layers },
   { id: "security", label: "Firewall & Keys", icon: Lock },
   { id: "content", label: "Data Integrity", icon: MessageSquare },
   { id: "system", label: "Kernel Config", icon: Settings2 },
@@ -275,7 +276,7 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(true);
   const [broadcastMsg, setBroadcastMsg] = useState("");
   const [sending, setSending] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "stories" | "requests" | "password" | "users" | "content" | "system" | "security">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "stories" | "requests" | "password" | "users" | "features" | "content" | "system" | "security">("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [kernelStatus, setKernelStatus] = useState("STABLE");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -750,7 +751,163 @@ export function AdminPanel({ onClose }: { onClose: () => void }) {
                   </motion.div>
                 )}
 
-              {activeTab === "security" && (
+                {activeTab === "features" && (
+                  <motion.div key="features" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-full flex flex-col">
+                    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 space-y-6 pb-8">
+                      <div className="p-8 bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem]">
+                        <div className="flex items-center gap-4 mb-8">
+                          <Layers className="w-8 h-8 text-indigo-400" />
+                          <div>
+                            <h4 className="text-2xl font-black italic text-white">Advanced Features</h4>
+                            <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">Toggle advanced features for all users</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-6">
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl">
+                                  <Film className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Cinema Mode</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">Watch movies together with friends</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_cinema !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_cinema', String(v))} 
+                              />
+                            </div>
+                          </div>
+
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl">
+                                  <Music className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Music Player</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">YouTube & local files music player</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_music !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_music', String(v))} 
+                              />
+                            </div>
+                          </div>
+
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-pink-600 to-rose-600 rounded-2xl">
+                                  <CalendarHeart className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Memories Calendar</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">Special days and memories with friends</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_memories !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_memories', String(v))} 
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-8 bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem]">
+                        <div className="flex items-center gap-4 mb-8">
+                          <MessageCircle className="w-8 h-8 text-emerald-400" />
+                          <div>
+                            <h4 className="text-2xl font-black italic text-white">Communication Features</h4>
+                            <p className="text-[10px] text-white/30 font-bold uppercase tracking-widest mt-1">Toggle core communication features</p>
+                          </div>
+                        </div>
+                        
+                        <div className="grid gap-6">
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl">
+                                  <MessageSquare className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Chat System</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">End-to-end encrypted messaging</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_chat !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_chat', String(v))} 
+                              />
+                            </div>
+                          </div>
+
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-emerald-600 to-green-600 rounded-2xl">
+                                  <Phone className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Voice & Video Calls</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">Real-time voice and video calling</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_calls !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_calls', String(v))} 
+                              />
+                            </div>
+                          </div>
+
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-amber-600 to-orange-600 rounded-2xl">
+                                  <Image className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Stories</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">24-hour expiring photo/video stories</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_stories !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_stories', String(v))} 
+                              />
+                            </div>
+                          </div>
+
+                          <div className="p-6 bg-white/[0.02] border border-white/5 rounded-3xl">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="p-3 bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl">
+                                  <Shield className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                  <h4 className="text-lg font-black italic text-white tracking-tight">Private Vault</h4>
+                                  <p className="text-[9px] text-white/30 font-bold uppercase tracking-widest mt-1">Secure storage for sensitive media</p>
+                                </div>
+                              </div>
+                              <Switch 
+                                checked={systemConfig.feature_vault !== 'false'} 
+                                onCheckedChange={(v) => updateConfig('feature_vault', String(v))} 
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === "security" && (
                 <motion.div key="security" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid gap-6">
                   <div className="p-8 bg-white/[0.02] border border-white/[0.05] rounded-[2.5rem] space-y-8">
                     <div className="flex items-center justify-between">
